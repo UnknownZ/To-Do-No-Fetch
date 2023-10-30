@@ -1,0 +1,12 @@
+li {
+    display: flex;
+}
+
+.icon {
+    visibility: hidden;
+}
+
+li:hover .icon {
+    color: red;
+    visibility: visible;
+}
