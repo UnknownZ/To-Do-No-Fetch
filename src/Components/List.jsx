@@ -1,26 +1,125 @@
-import React, { useState } from "react";
+import React, { Component, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import './List.css'
 
 function List() {
-  const [taskText, setTaskText] = useState("")
-  const [taskList, setTaskList] = useState([])
-  const [isHovering, setIsHovering] = useState(false)
+  const [taskText, setTaskText] = useState("");
+  const [taskList, setTaskList] = useState([]);
 
-  const handleMouseOut = () => {
-    setIsHovering(false)
+  useEffect(() => {
+    userCreation()
+  }, [])
+
+  /*
+  Se espera a la creacion de usuario y se obtiene la lista
+  */
+
+  const userCreation = async () => {
+    await createUser()
+    getToDoList()
   }
 
-  const handleMouseOver = () => {
-    setIsHovering(true)
+  /*
+  Funcion de creacion del usuario en la API
+  */
+
+  const createUser = () => {
+    fetch('https://playground.4geeks.com/apis/fake/todos/user/unknown', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify([])
+    })
+      .then(resp => {
+        return resp.json();
+      })
+      .then(data => {
+      })
+      .catch(error => {
+        console.log("Error en la creacion: " + error);
+      });
   }
 
-  const handleRemove = (index) => {
-    setTaskList(taskList.filter((_, current) => index !== current))
+  /*
+  Actualizacion de la API cuando cambia la lista
+  */
+
+  const updateToApi = (arr) => {
+    console.log(taskList)
+    fetch('https://playground.4geeks.com/apis/fake/todos/user/unknown', {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(arr)
+    })
+      .then(resp => {
+        return resp.json();
+      })
+      .then(data => {
+      })
+      .catch(error => {
+        console.log("Error al enviar la lista: " + error);
+      });
   }
 
+  /*
+  Recepcion de la lista de la API
+  */
 
+  const getToDoList = () => {
+    fetch('https://playground.4geeks.com/apis/fake/todos/user/unknown', {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+      .then(resp => {
+        return resp.json();
+      })
+      .then(data => {
+        data.forEach(element => delete element.id
+        );
+        setTaskList(data)
+      })
+      .catch(error => {
+        console.log("Error al obtener la lista: " + error);
+      });
+  }
+
+  const addTodo = () => {
+    const arr = [...taskList, { label: taskText, done: false, }]
+    setTaskList([...arr])
+    updateToApi(arr)
+    setTaskText("")
+  }
+
+  const deleteTodo = (index) => {
+    const arr = taskList.filter((_, current) => index !== current)
+    setTaskList([...arr])
+    updateToApi(arr)
+  }
+
+  const deleteAll = () => {
+    fetch('https://playground.4geeks.com/apis/fake/todos/user/unknown', {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+      .then(resp => {
+        return resp.json();
+
+      })
+      .then(data => {
+        setTaskList([])
+      })
+      .catch(error => {
+        console.log("DELETE: " + error);
+      });
+  }
 
   return (
     <div id="lista">
@@ -33,8 +132,7 @@ function List() {
             onChange={(e) => setTaskText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                setTaskList([...taskList, taskText])
-                setTaskText("")
+                addTodo()
               }
             }}
           >
@@ -44,22 +142,24 @@ function List() {
         {taskList.map((task, index) => {
           return (
             <li key={index}>
-              {task}
+              {task.label}
               <div className="icon">
-              <FontAwesomeIcon
-                icon={faTrashCan}
-                onClick={() =>
-                  setTaskList(
-                    taskList.filter((_, current) => index !== current)
-                  )
-                }
-              />
+                <FontAwesomeIcon
+                  icon={faTrashCan}
+                  onClick={() => {
+                    deleteTodo(index)
+                  }
+                  }
+                />
               </div>
             </li>
           )
         })}
       </ul>
-      {taskList.length + " pending tasks"}
+      {taskList.length + " pending tasks"} <br />
+      <button onClick={ deleteAll }>
+        Delete all tasks
+      </button>
     </div>
   )
 
